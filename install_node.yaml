@@ -1,0 +1,45 @@
+---
+- hosts: localhost
+  connection: local
+  gather_facts: no
+
+  vars:
+    REGION: 'ap-northeast-2'
+    SSH_KEY_NAME: 'instance_key'
+    LOCAL_HOME: "{{ lookup('env','HOME')}}"
+    CODEDPUSER: 'dev_codedpuser'
+    CDBUCKETNAME: 'aws-codedeploy-ap-northeast-2'
+    NODEFILE: 'node-v12.14.1-linux-x64.tar.xz'
+    NODE_VERSION: 'node-v12.14.1-linux-x64'
+
+  tasks:
+
+  - name: get ec2 instance fact
+    ec2_instance_info:
+       filters:
+         "tag:name": node
+       region:   '{{ REGION }}'
+       #- debug:
+       #var: '{{ public_ip_address }}'
+    register: instances
+
+
+  - debug:
+          #var: "{{ instances['public_ip_address'] }}"
+          #var:   instances['public_ip_address']
+          var: instances.instances[0]['public_ip_address']
+          #var: "{{ instances[0]['public_ip_address'] }}"
+
+
+  - name: Shell connect with ssh key and copy node and set path, install mysql also?
+    shell: |
+            scp -i "{{ SSH_KEY_NAME }}" "{{ NODEFILE }}" ec2-user@"{{ instances.instances[0]['public_ip_address'] }}":/home/ec2-user/
+            ssh -i "{{ SSH_KEY_NAME }}" ec2-user@"{{ instances.instances[0]['public_ip_address'] }}" "cd /home/ec2-user; tar xJf {{ NODEFILE }}"
+            ssh -i "{{ SSH_KEY_NAME }}" ec2-user@"{{ instances.instances[0]['public_ip_address'] }}" "sudo echo export PATH=/home/ec2-user/{{ NODE_VERSION }}/bin:$PATH >> /home/ec2-user/.bashrc"
+            ssh -i "{{ SSH_KEY_NAME }}" ec2-user@"{{ instances.instances[0]['public_ip_address'] }}" "mkdir /home/ec2-user/node_auth"
+            
+    ignore_errors: yes
+    register: RESULT          
+
+  - debug:
+       var: RESULT

@@ -1,0 +1,16 @@
+---
+- hosts: localhost
+  connection: local
+  gather_facts: no
+
+  vars:
+    REGION: 'ap-northeast-2'
+    SSH_KEY_NAME: 'instance_key'
+    LOCAL_HOME: "{{ lookup('env','HOME')}}"
+    CODEDPUSER: 'dev_codedpuser'
+    STATE: present
+    VPC_ID: 'vpc-f51eca9e'
+    #STATE: absent
+  tasks:
+
+  #To be

@@ -1,0 +1,93 @@
+---
+- hosts: localhost
+  connection: local
+  gather_facts: no
+  strategy: free
+
+  vars:
+    user1: 'cc_user' 
+    REGION: 'ap-northeast-2'
+    SSH_KEY_NAME: 'codecommit_key'
+    LOCAL_HOME: "{{ lookup('env','HOME')}}"
+    REPO_NAME: 'node_auth'
+    #STATE: 'absent'
+    
+    STATE: 'present'
+
+  tasks:
+  - name: Detach codecommit full permission to codecommit_user
+    command: 'aws iam detach-user-policy --policy-arn arn:aws:iam::aws:policy/AWSCodeCommitPowerUser --user-name {{ item }}'
+    loop:
+      - '{{ user1 }}'
+    ignore_errors: yes
+    when: STATE == 'absent'
+
+  - name: Create one code commit user with ssh keys
+    iam_user:
+            #iam_type: user
+      name: '{{ item }}'
+      #state: absent
+      state: '{{ STATE }}'
+    loop:
+      - '{{ user1 }}'
+    when: STATE == 'present'
+
+
+  - name: Attach codecommit full permission to codecommit_user
+    command: 'aws iam attach-user-policy --policy-arn arn:aws:iam::aws:policy/AWSCodeCommitPowerUser --user-name {{ item }}'
+    loop:
+      - '{{ user1 }}'
+    when: STATE == 'present'
+    
+
+  #Basically do not genearge if it is already exists
+  - name: Generate ssh key for codecommit connection
+    openssh_keypair:
+      path: '{{ SSH_KEY_NAME }}'
+      size: 2048
+      type: rsa
+
+  # Include public key update playbook
+  - include: pubkey_upload.yaml
+
+  - name: Check ssh(.ssh) directory check
+    stat:
+      path: '{{ LOCAL_HOME }}/.ssh'
+    register: ssh_folder
+
+  - name: Create $HOME/.ssh directory if not exists
+    file:
+      path: '{{ LOCAL_HOME }}/.ssh'
+      state: directory
+      mode: 0700
+    when: ssh_folder.stat.exists == false
+
+  #In reality,aws admin will give ssh private key to each developer,here just automation and practice
+  - name: "{{ SSH_KEY_NAME }} register into HOME/.ssh/config"
+    shell: |
+          SSH_KEY_ID=$(aws iam list-ssh-public-keys --user-name {{ user1 }} --output=text | awk '{print $2}')
+          echo "Host git-codecommit.*.amazonaws.com" > $HOME/.ssh/config
+          echo "User $SSH_KEY_ID" >> $HOME/.ssh/config
+          echo "IdentityFile $PWD/{{ SSH_KEY_NAME }}" >> $HOME/.ssh/config
+          chmod 600 $HOME/.ssh/config
+    register: ssh_home_register
+
+  - debug:
+      var: ssh_home_register
+
+  #Create codecommit repository
+  - name: Create codecommit repository
+    aws_codecommit:
+      name: '{{ REPO_NAME }}'
+      state: '{{ STATE }}'
+      region: '{{ REGION }}'
+
+  - name: "Delete {{ user1 }}"
+    command: 'aws iam delete-user --user-name {{ item }}'
+    loop:
+      - '{{ user1 }}'
+    ignore_errors: yes
+    when: STATE == 'absent'
+
+  #Get ssh git url from codecommit
+  #aws codecommit get-repository --repository-name node_auth --output=text | awk '{print $5}'

@@ -1,0 +1,7 @@
+node_dp/
+node_modules/
+instance_key
+instance_key.pub
+codecommit_key.pub
+codecommit_key
+node_auth

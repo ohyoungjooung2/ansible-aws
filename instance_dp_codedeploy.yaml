@@ -1,0 +1,108 @@
+---
+- hosts: localhost
+  connection: local
+  gather_facts: no
+
+  vars:
+    REGION: 'ap-northeast-2'
+    SSH_KEY_NAME: 'instance_key'
+    LOCAL_HOME: "{{ lookup('env','HOME')}}"
+    CODEDPUSER: 'dev_codedpuser'
+    STATE: present
+    VPC_ID: 'vpc-f51eca9e'
+    #STATE: absent
+    STATE: present
+  tasks:
+
+
+  #Create vpc subnet id
+  - name: Create subnet for webnode servers
+    ec2_vpc_subnet:
+      #state: '{{ STATE }}'
+      vpc_id: '{{ VPC_ID }}'
+      cidr: 172.31.0.0/24
+      tags:
+        Name: webnode_subnet
+    register: webnode_subnet
+    
+  - name: vpc_subnet_facts get 
+    ec2_vpc_subnet_facts:
+      filters:
+        vpc-id: '{{ VPC_ID }}'
+        "tag:Name":  "webnode_subnet" 
+    register: subnet_fact
+
+  - set_fact:
+      subnet_id: "{{ subnet_fact.subnets[0].subnet_id }}"
+
+  - debug:
+      var: subnet_id
+
+  #Key generate for instance connection
+  - name: Generate ssh key for codecommit connection
+    openssh_keypair:
+      path: '{{ SSH_KEY_NAME }}'
+      size: 2048
+      type: rsa
+
+
+  #Basically do not genearge if it is already exists
+  - name: Generate ssh key for amazon linux instanceconnection
+    ec2_key:
+      name: '{{ SSH_KEY_NAME }}'
+      key_material: "{{ lookup('file', '{{ SSH_KEY_NAME }}.pub') }}"
+      state: '{{ STATE }}'
+
+  #Get public ip of my machine
+  - name: Get my public IP
+    ipify_facts: 
+
+  - name: Codedeploy node from codecommit test and study
+    ec2_group:
+      name: nodejs_service
+      description: an example EC2 group
+      state: '{{ STATE }}'
+      region: '{{ REGION }}'
+      #Basically ingress
+      rules:
+        - proto: tcp
+          from_port: 3000
+          to_port: 3000
+          #cidr_ip: 0.0.0.0/0
+          cidr_ip: '{{ ipify_public_ip }}/32'
+          group_desc: for node
+        - proto: tcp 
+          from_port: 22
+          to_port: 22
+          cidr_ip: 0.0.0.0/0
+        - proto: tcp
+          from_port: 80
+          to_port: 80
+          cidr_ip: 0.0.0.0/0
+          #group_name:
+      #rules_egress:
+#      - proto: tcp
+#        from_port: 80
+#        to_port: 80
+#        cidr_ip: 0.0.0.0/0
+#        cidr_ipv6: 64:ff9b::/96
+#        group_name: example-other
+#        # description to use if example-other needs to be created
+#        group_desc: other example EC2 group
+
+
+  - name: Create aws instance for deployment
+    ec2:
+      key_name: '{{ SSH_KEY_NAME }}'
+      region: '{{ REGION }}'
+      instance_type: t2.micro
+      instance_profile_name: dev_codedp_ec2_instance_profile
+      image: ami-0bea7fd38fabe821a 
+      wait: yes
+      group: nodejs_service
+      count: 1
+      vpc_subnet_id: '{{ subnet_id }}'
+      assign_public_ip: yes
+      state: '{{ STATE }}'
+      instance_tags:
+            name: node

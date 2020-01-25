@@ -1,0 +1,47 @@
+---
+- hosts: localhost
+  connection: local
+  gather_facts: no
+
+  vars:
+    REGION: 'ap-northeast-2'
+    SSH_KEY_NAME: 'instance_key'
+    LOCAL_HOME: "{{ lookup('env','HOME')}}"
+    CODEDPUSER: 'dev_codedpuser'
+    CDBUCKETNAME: 'aws-codedeploy-ap-northeast-2'
+
+  tasks:
+
+  - name: get ec2 instance fact
+    ec2_instance_info:
+       filters:
+         "tag:name": node
+       region:   '{{ REGION }}'
+       #- debug:
+       #var: '{{ public_ip_address }}'
+    register: instances
+
+
+  - debug:
+          #var: "{{ instances['public_ip_address'] }}"
+          #var:   instances['public_ip_address']
+          var: instances.instances[0]['public_ip_address']
+          #var: "{{ instances[0]['public_ip_address'] }}"
+
+
+  - name: Shell connect with ssh key
+    shell: |
+          ssh -i "{{ SSH_KEY_NAME }}" ec2-user@"{{ instances.instances[0]['public_ip_address'] }}" sudo yum -y update
+          ssh -i "{{ SSH_KEY_NAME }}" ec2-user@"{{ instances.instances[0]['public_ip_address'] }}" sudo yum -y install ruby
+          ssh -i "{{ SSH_KEY_NAME }}" ec2-user@"{{ instances.instances[0]['public_ip_address'] }}" sudo yum -y install wget
+          ssh -i "{{ SSH_KEY_NAME }}" ec2-user@"{{ instances.instances[0]['public_ip_address'] }}" 'wget -O install https://"{{ CDBUCKETNAME }}".s3."{{ REGION }}".amazonaws.com/latest/install'
+          ssh -i "{{ SSH_KEY_NAME }}" ec2-user@"{{ instances.instances[0]['public_ip_address'] }}" chmod +x ./install
+          ssh -i "{{ SSH_KEY_NAME }}" ec2-user@"{{ instances.instances[0]['public_ip_address'] }}" 'sudo ruby install auto 2>/dev/null'
+          RESULT=$(ssh -i "{{ SSH_KEY_NAME }}" ec2-user@"{{ instances.instances[0]['public_ip_address'] }}" sudo service codedeploy-agent status)
+          echo $RESULT
+    ignore_errors: yes
+    register: RESULT          
+
+  - debug:
+       var: RESULT
+
