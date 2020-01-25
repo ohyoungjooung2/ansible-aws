@@ -1,0 +1,31 @@
+---
+- hosts: localhost
+  connection: local
+  gather_facts: no
+
+  vars:
+    REGION: 'ap-northeast-2'
+    SSH_KEY_NAME: 'instance_key'
+    LOCAL_HOME: "{{ lookup('env','HOME')}}"
+    CODEDPUSER: 'dev_codedpuser'
+    CDBUCKETNAME: 'aws-codedeploy-ap-northeast-2'
+
+  tasks:
+
+  - name: get ec2 instance fact
+    ec2_instance_info:
+       filters:
+         "tag:name": node
+       region:   '{{ REGION }}'
+       #- debug:
+       #var: '{{ public_ip_address }}'
+    register: instances
+
+  - debug:
+       var: instances.instances[0].instance_id
+
+  - name: "Delete {{ instances.instances[0].instance_id }}"
+    ec2_instance:
+       state: absent
+       filters:
+          instance_id: '{{ instances.instances[0].instance_id }}'
