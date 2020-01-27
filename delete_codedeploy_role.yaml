@@ -1,0 +1,67 @@
+---
+- hosts: localhost
+  connection: local
+  gather_facts: no
+
+  vars:
+    REGION: 'ap-northeast-2'
+    SSH_KEY_NAME: 'codecommit_key'
+    LOCAL_HOME: "{{ lookup('env','HOME')}}"
+    CODEDPUSER: 'dev_codedpuser'
+    #STATE: present
+    STATE: absent
+  #https://docs.aws.amazon.com/codedeploy/latest/userguide/getting-started-provision-user.html
+  tasks:
+
+  - name: "Delete iam policy to grant it on {{ CODEDPUSER }}"
+    iam_policy:
+      iam_type: user
+      iam_name: '{{ CODEDPUSER }}'
+      policy_name: '{{ CODEDPUSER }}'
+      state: '{{ STATE }}'
+      policy_document: codedp_policy.json
+      #ignore_error: yes
+
+  #Only ec2 codedeploy
+  #aws iam create-role --role-name dev_codedp_service_role --assume-role-policy-document file://codedp_trust.json
+  #aws iam attach-role-policy --role-name dev_codedp_service_role --policy-arn arn:aws:iam::aws:policy/service-role/AWSCodeDeployRole
+  #aws iam get-role --role-name dev_codedp_service_role --query "Role.Arn" --output text
+  - name: Delete servive role 
+    iam_role:
+      name: dev_codedp_service_role
+      assume_role_policy_document: "{{ lookup('file','codedp_trust.json') }}"
+      managed_policy:
+        - arn:aws:iam::aws:policy/service-role/AWSCodeDeployRole
+      description: This is dev_codedp_service_role
+      create_instance_profile: no
+      state: '{{ STATE }}'
+
+  #aws iam put-role-policy --role-name dev_codedp_ec2_instance_profile --policy-name pdocument --policy-document file://codedp_ec2_permission.json 
+  - name: aws iam put-role-policy to dev_codedp_ec2_instance_profile
+    iam_policy:
+      iam_type: role
+      iam_name: dev_codedp_ec2_instance_profile
+      policy_name: codedp_ec2_permission
+      state: '{{ STATE }}'
+      policy_document: codedp_ec2_permission.json 
+
+      #- name: Attach codedeploy policy to {{ CODEDPUSER }}
+      #command: 'aws iam attach-user-policy --policy-arn  --user-name {{ CODEDPUSER }}'
+
+  - name: Delete an IAM Instance Profile
+    iam_role:
+      name: dev_codedp_ec2_instance_profile
+      assume_role_policy_document: "{{ lookup('file','codedp_ec2_trust.json') }}"
+      #managed_policy:
+      #  - arn:aws:iam::aws:policy/service-role/AWSCodeDeployRole
+      description: This is dev_codedp_service_role
+      create_instance_profile: yes
+      state: '{{ STATE }}'
+
+      
+  - name: "Delete codedeploy user {{ CODEDPUSER }}"
+    iam:
+      iam_type: user
+      name: '{{ CODEDPUSER }}'
+      #state: absent
+      state: '{{ STATE }}'
