@@ -19,7 +19,7 @@
       #state: absent
       state: '{{ STATE }}'
 
-  - name: "Create iam policy to grant it on {{ CODEPUSER }}"
+  - name: "Create iam policy to grant it on {{ CODEDPUSER }}"
     iam_policy:
       iam_type: user
       iam_name: '{{ CODEDPUSER }}'
