@@ -1,7 +1,7 @@
 - hosts: all
   #connection: local
   gather_facts: no
-
+ 
   become: yes
   vars:
     LOCAL_HOME: "{{ lookup('env','HOME')}}"
@@ -38,7 +38,7 @@
   - debug:
        var: RESULT
 
-  - name: Install jenkins from repo
+  - name: Install jenkins from repo onto amazon linux
     shell: |
           yum -y install java-1.8.0-openjdk.x86_64
           wget -O /etc/yum.repos.d/jenkins.repo http://pkg.jenkins-ci.org/redhat/jenkins.repo
