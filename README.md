@@ -10,7 +10,6 @@ This repo is for creating ci/cd with ansible+awscodecommit+aws codedeploy+pipeli
 
        oyj@controller:~$ mkdir ansible_aws
       
-
     
 
  **Example)**
@@ -18,9 +17,8 @@ This repo is for creating ci/cd with ansible+awscodecommit+aws codedeploy+pipeli
 
       (node_dp) oyj@controller:~/deploy_aws$ cat ~/.bashrc  | tail -3
       export AWS_ACCESS_KEY_ID=AKIAXGQZTLE   #This is for aws cli and ansible
-      export AWS_ACCESS_KEY=musomekeyAYEwnH8eORVFEZHK2hgF #This is for ansible(secret key)
-      export AWS_SECRET_ACCESS_KEY=musomekeyAYEwnHORVFEZHK2hgF #this is for aws cli(secret key)
-
+      export AWS_ACCESS_KEY=somekey #This is for aws cli
+      export AWS_SECRET_ACCESS_KEY=somekey #This is for ansible
 
 **1. Create codecommit repo.**
 
