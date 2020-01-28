@@ -96,19 +96,19 @@
     ignore_errors: yes
     when: STATE == 'absent'
 
-  - name: Get ssh git url from codecommit and clone
-    shell: |
-            if [ -e ./node_auth ]
-            then
-                echo "removeing ./node_auth directory"
-                rm -rf ./node_auth;
-            fi
-            git clone "{{ repo.repository_metadata['clone_url_ssh'] }}"
-            cp -rfp ./node_auth_source/* ./node_auth/
-            cd node_auth; git add .; git commit -m "node_auth first commit"; git push
-    ignore_errors: yes
-    register: result
-    when: STATE == 'present'
+#  - name: Get ssh git url from codecommit and clone
+#    shell: |
+#            if [ -e ./node_auth ]
+#            then
+#                echo "removeing ./node_auth directory"
+#                rm -rf ./node_auth;
+#            fi
+#            git clone "{{ repo.repository_metadata['clone_url_ssh'] }}"
+#            #cp -rfp ./node_auth_source/* ./node_auth/
+#            #cd node_auth; git add .; git commit -m "node_auth first commit"; git push
+#    ignore_errors: yes
+#    register: result
+#    when: STATE == 'present'
 
-  - debug:
-       var: result
+    #  - debug:
+    #   var: result
