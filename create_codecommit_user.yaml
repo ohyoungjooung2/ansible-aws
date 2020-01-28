@@ -82,6 +82,12 @@
       name: '{{ REPO_NAME }}'
       state: '{{ STATE }}'
       region: '{{ REGION }}'
+    register: repo
+
+  - debug:
+      var: repo
+
+      #- meta: end_play
 
   - name: "Delete {{ user1 }}"
     command: 'aws iam delete-user --user-name {{ item }}'
@@ -92,13 +98,12 @@
 
   - name: Get ssh git url from codecommit and clone
     shell: |
-            giturl=$(aws codecommit get-repository --repository-name node_auth --output=text | awk '{print $5}')
             if [ -e ./node_auth ]
             then
                 echo "removeing ./node_auth directory"
                 rm -rf ./node_auth;
             fi
-            git clone $giturl
+            'git clone {{ repo.repository_metadata['clone_url_ssh'] }}'
             cp -rfp ./node_auth_source/* ./node_auth/
             cd node_auth; git add .; git commit -m "node_auth first commit"; git push
     ignore_errors: yes

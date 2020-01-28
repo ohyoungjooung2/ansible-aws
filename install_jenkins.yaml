@@ -3,11 +3,29 @@
   connection: local
   gather_facts: no
 
+  become: yes
   vars:
     LOCAL_HOME: "{{ lookup('env','HOME')}}"
 
   tasks:
+  - name: Collect only facts returned by facter to save time
+    setup:
+      gather_subset:
+         - '!all'
+         - '!any'
+         - facter
 
+  - name: Install wget package
+    shell: |
+         sudo apt install -y wget
+    when: ansible_os_family == 'Debian'
+
+
+  - name: Install wget package with rpm based hosts
+    command: sudo yum -y install wget
+    when: ansible_os_family == 'Redhat'
+
+  - meta: end_play
 
   - name: Install jenkins from repo
     shell: |
@@ -16,6 +34,7 @@
           sudo apt-get -y update
           sudo apt-get -y install jenkins
     register: RESULT          
+    when: ansible_os_family == 'Debian'
 
   - debug:
        var: RESULT
