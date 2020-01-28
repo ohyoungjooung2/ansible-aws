@@ -2,7 +2,7 @@
 - hosts: localhost
   connection: local
   gather_facts: no
-
+ 
   become: yes
   vars:
     LOCAL_HOME: "{{ lookup('env','HOME')}}"
@@ -19,7 +19,6 @@
     shell: |
          sudo apt install -y wget
     when: ansible_os_family == 'Debian'
-
 
   - name: Install wget package with rpm based hosts
     command: sudo yum -y install wget
