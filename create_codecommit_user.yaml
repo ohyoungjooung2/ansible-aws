@@ -98,7 +98,7 @@
                 echo "removeing ./node_auth directory"
                 rm -rf ./node_auth;
             fi
-            git clone $URL
+            git clone "$URL"
             cp -rfp ./node_auth_source/* ./node_auth/
             cd node_auth; git add .; git commit -m "node_auth first commit"; git push
     ignore_errors: yes
