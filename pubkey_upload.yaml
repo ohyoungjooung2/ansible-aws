@@ -1,8 +1,6 @@
   - name: Public key alread uploaed {{ user1 }} ?
     shell: "aws iam list-ssh-public-keys --user-name {{ user1 }} --output=text | awk '{print $2}'"
     register: user1_regi
-    when: STATE=='present'
-    ignore_errors: yes
 
   - debug:
        var: user1_regi.stdout
