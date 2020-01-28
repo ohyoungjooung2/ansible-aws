@@ -1,0 +1,21 @@
+---
+- hosts: localhost
+  connection: local
+  gather_facts: no
+
+  vars:
+    LOCAL_HOME: "{{ lookup('env','HOME')}}"
+
+  tasks:
+
+
+  - name: Install jenkins from repo
+    shell: |
+          wget -q -O - https://pkg.jenkins.io/debian/jenkins.io.key | sudo apt-key add -
+          sudo sh -c 'echo deb https://pkg.jenkins.io/debian-stable binary/ > /etc/apt/sources.list.d/jenkins.list'
+          sudo apt-get -y update
+          sudo apt-get -y install jenkins
+    register: RESULT          
+
+  - debug:
+       var: RESULT

@@ -1,6 +1,8 @@
   - name: Public key alread uploaed {{ user1 }} ?
     shell: "aws iam list-ssh-public-keys --user-name {{ user1 }} --output=text | awk '{print $2}'"
     register: user1_regi
+    when: STATE=='present'
+    ignore_errors: yes
 
   - debug:
        var: user1_regi.stdout
@@ -8,11 +10,11 @@
        #ser1_regi.stdout": {
        # "SSHPublicKeys": [
        #     {
-       #         "SSHPublicKeyId": "APKAXGFYD7MI3KTY3SSB",
-
+       #         "SSHPublicKeyId": "",
 
   - name: Upload {{ SSH_KEY_NAME }} for {{ user1 }} public key
     command: 'aws iam upload-ssh-public-key --user-name {{ user1 }} --ssh-public-key-body file://{{ SSH_KEY_NAME }}.pub'
+    ignore_errors: yes
     when: (user1_regi.stdout == "") and (STATE=='present')
 
   - name: delete {{ SSH_KEY_NAME }} for {{ user1 }} public key
