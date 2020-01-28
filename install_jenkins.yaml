@@ -1,6 +1,5 @@
----
-- hosts: localhost
-  connection: local
+- hosts: all
+  #connection: local
   gather_facts: no
 
   become: yes
@@ -20,12 +19,12 @@
          sudo apt install -y wget
     when: ansible_os_family == 'Debian'
 
+  - name: Install wget package on amazon linux(redhat)
+    shell: |
+         yum install -y wget
+    when: (ansible_os_family == 'RedHat') and (ansible_distribution == 'Amazon')
 
-  - name: Install wget package with rpm based hosts
-    command: sudo yum -y install wget
-    when: ansible_os_family == 'Redhat'
-
-  - meta: end_play
+    #- meta: end_play
 
   - name: Install jenkins from repo
     shell: |
@@ -35,6 +34,19 @@
           sudo apt-get -y install jenkins
     register: RESULT          
     when: ansible_os_family == 'Debian'
+
+  - debug:
+       var: RESULT
+
+  - name: Install jenkins from repo
+    shell: |
+          yum -y install java-1.8.0-openjdk.x86_64
+          wget -O /etc/yum.repos.d/jenkins.repo http://pkg.jenkins-ci.org/redhat/jenkins.repo
+          rpm --import https://jenkins-ci.org/redhat/jenkins-ci.org.key
+          yum -y update
+          yum -y install jenkins java
+    register: RESULT          
+    when: (ansible_os_family == 'RedHat') and (ansible_distribution == 'Amazon')
 
   - debug:
        var: RESULT
