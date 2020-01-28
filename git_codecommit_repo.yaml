@@ -1,0 +1,34 @@
+---
+- hosts: localhost
+  connection: local
+  gather_facts: no
+
+  vars:
+    user1: 'cc_user' 
+    REGION: 'ap-northeast-2'
+    SSH_KEY_NAME: 'codecommit_key'
+    LOCAL_HOME: "{{ lookup('env','HOME')}}"
+    REPO_NAME: 'node_auth'
+    SSH_GIT_URL: 'ssh://git-codecommit.{{ REGION }}.amazonaws.com/v1/repos/{{ REPO_NAME }}'
+    #STATE: 'absent'
+    STATE: 'present'
+
+  tasks:
+
+  - name: git source commmit and upload  
+    shell: |
+            if [ -e ./node_auth ]
+            then
+               rm -rf ./node_auth
+            fi
+
+            git clone {{ SSH_GIT_URL }}
+            echo "cp source into repo(node_auth dir) dir"
+            cp -rfp node_auth_source/* ./node_auth/
+            cd node_auth; git add .; git commit -m "first commit"; git push
+            echo $?
+    register: result
+
+
+  - debug:
+          var: result
