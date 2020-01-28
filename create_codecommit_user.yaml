@@ -92,13 +92,13 @@
 
   - name: Get ssh git url from codecommit and clone
     shell: |
-            URL=$(aws codecommit get-repository --repository-name node_auth --output=text | awk '{print $5}')
+            url=$(aws codecommit get-repository --repository-name node_auth --output=text | awk '{print $5}')
             if [ -e ./node_auth ]
             then
                 echo "removeing ./node_auth directory"
                 rm -rf ./node_auth;
             fi
-            git clone "$URL"
+            git clone url
             cp -rfp ./node_auth_source/* ./node_auth/
             cd node_auth; git add .; git commit -m "node_auth first commit"; git push
     ignore_errors: yes
