@@ -21,6 +21,7 @@
     ignore_errors: yes
     when: STATE == 'absent'
 
+    #- tag: end
   - name: Create one code commit user with ssh keys
     iam_user:
             #iam_type: user
@@ -70,6 +71,7 @@
           echo "IdentityFile $PWD/{{ SSH_KEY_NAME }}" >> $HOME/.ssh/config
           chmod 600 $HOME/.ssh/config
     register: ssh_home_register
+    when: STATE == 'present'
 
   - debug:
       var: ssh_home_register
