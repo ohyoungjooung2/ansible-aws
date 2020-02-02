@@ -100,6 +100,8 @@
   handlers:
   - name: git source commmit and upload to codecommit
     shell: |
+          sleep 10
+          echo "Sleeping 10 seconds til repo create ends"
           if [ -e ./node_auth ]
           then
              rm -rf ./node_auth
