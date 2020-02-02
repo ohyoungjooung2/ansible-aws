@@ -43,4 +43,3 @@ This repo is for creating ci/cd with ansible+awscodecommit+aws codedeploy+pipeli
 
       Deploy node_auth nodejs app.
 
-

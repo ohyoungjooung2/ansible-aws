@@ -4,13 +4,14 @@
   gather_facts: no
 
   vars:
+    #Codecommit user
     user1: 'cc_user' 
     REGION: 'ap-northeast-2'
     SSH_KEY_NAME: 'codecommit_key'
     LOCAL_HOME: "{{ lookup('env','HOME')}}"
     REPO_NAME: 'node_auth'
+    SSH_GIT_URL: 'ssh://git-codecommit.{{ REGION }}.amazonaws.com/v1/repos/{{ REPO_NAME }}'
     #STATE: 'absent'
-    
     STATE: 'present'
 
   tasks:
@@ -83,10 +84,11 @@
       state: '{{ STATE }}'
       region: '{{ REGION }}'
     register: repo
+    notify: 
+        - "git source commit and push TO codecommit url"
 
   - debug:
       var: repo
-      #- meta: end_play
 
   - name: "Delete {{ user1 }}"
     command: 'aws iam delete-user --user-name {{ item }}'
@@ -94,3 +96,25 @@
       - '{{ user1 }}'
     ignore_errors: yes
     when: STATE == 'absent'
+
+  handlers:
+  - name: git source commmit and upload to codecommit
+    shell: |
+          if [ -e ./node_auth ]
+          then
+             rm -rf ./node_auth
+          fi
+
+          git clone {{ SSH_GIT_URL }}
+          echo "cp source into repo(node_auth dir) dir"
+          cp -rfp node_auth_source/* ./node_auth/
+          cd node_auth; git add .; git commit -m "first commit"; git push
+          echo $?
+    listen: "git source commit and push TO codecommit url"
+    register: result
+    when: STATE == 'present'
+
+
+
+#- meta: end_play
+
