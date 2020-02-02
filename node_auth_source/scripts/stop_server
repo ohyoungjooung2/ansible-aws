@@ -1,0 +1,8 @@
+#!/bin/bash
+cd /home/ec2-user/node_auth;
+pm2 stop
+isExistApp = `pgrep pm2`
+if [[ -n  $isExistApp ]]; then
+    pm2 stop        
+fi
+

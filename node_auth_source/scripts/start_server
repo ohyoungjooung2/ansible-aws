@@ -1,0 +1,5 @@
+#!/bin/bash
+cd /home/ec2-user/node_auth
+NODE_HOME=$HOME/node-v12.14.1-linux-x64
+export PATH=$NODE_HOME/bin:$PATH
+$NODE_HOME/bin/pm2 start app.js
