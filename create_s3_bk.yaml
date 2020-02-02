@@ -1,0 +1,29 @@
+---
+- hosts: localhost
+  connection: local
+  gather_facts: no
+
+  vars:
+    REGION: 'ap-northeast-2'
+    BNAME: "{{ ansible_date_time['date'] }}"
+    STATE: present
+    #STATE: absent
+  tasks:
+  - name: Collect only facts returned by facter to save time
+    setup:
+      gather_subset:
+         - '!all'
+         - '!any'
+         - facter
+
+          #https://docs.ansible.com/ansible/latest/modules/aws_s3_module.html
+  - name: "Create s3 bucket {{ BNAME }}"
+    aws_s3:
+       bucket: 'codedeploy-bucket-{{ REGION }}-{{ BNAME }}'
+       mode: create
+       region: '{{ REGION }}'
+    register: result
+
+  - debug:
+       var: result
+
