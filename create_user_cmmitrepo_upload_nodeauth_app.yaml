@@ -110,6 +110,7 @@
           git clone {{ SSH_GIT_URL }}
           echo "cp source into repo(node_auth dir) dir"
           cp -rfp node_auth_source/* ./node_auth/
+          cp -rfp node_auth_source/.gitignore* ./node_auth/
           cd node_auth; git add .; git commit -m "first commit"; git push
           echo $?
     listen: "git source commit and push TO codecommit url"
@@ -119,4 +120,3 @@
 
 
 #- meta: end_play
-
