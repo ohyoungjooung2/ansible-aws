@@ -8,10 +8,34 @@
     SSH_KEY_NAME: 'codecommit_key'
     LOCAL_HOME: "{{ lookup('env','HOME')}}"
     CODEDPUSER: 'dev_codedpuser'
+    S3_BUCKET: "{{ ansible_date_time['date'] }}"
     STATE: present
     #STATE: absent
   #https://docs.aws.amazon.com/codedeploy/latest/userguide/getting-started-provision-user.html
   tasks:
+  - name: Collect only facts returned by facter to save time
+    setup:
+      gather_subset:
+         - '!all'
+         - '!any'
+         - facter
+  - name: "Creaet s3 bucket codedeploy-bucket-{{ REGION }}-{{ S3_BUCKET }}'
+    aws_s3:
+      bucket: 'codedeploy-bucket-{{ REGION }}-{{ S3_BUCKET }}'
+      mode: create
+      region: '{{ REGION }}'
+      register: result
+  - debug:
+      var: result  
+
+      policy_document: codedp_ec2_permission.json 
+
+  - name: Modify policy document to s3 allow to deploy
+    
+
+
+
+
   - name: "Create codedeploy user {{ CODEDPUSER }}"
     iam:
       iam_type: user
