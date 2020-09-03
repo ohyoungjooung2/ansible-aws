@@ -1,0 +1,73 @@
+---
+- hosts: localhost
+  connection: local
+  gather_facts: no
+
+  vars:
+    REGION: 'ap-northeast-2'
+    SSH_KEY_NAME: 'win_instance_key'
+    LOCAL_HOME: "{{ lookup('env','HOME')}}"
+    VPC_ID: 'vpc-f51eca9e'
+    STATE: absent
+    INSTID: 'i-0e20ddd348c89c41d'
+    #STATE: present
+  tasks:
+
+  - name: Create aws instance for winwas
+    ec2:
+      key_name: '{{ SSH_KEY_NAME }}'
+      region: '{{ REGION }}'
+      instance_type: t2.micro
+      image: ami-0b4d076bfd308be28
+      group: winwas_service_sg
+      wait: yes
+      count: 1
+      assign_public_ip: yes
+      private_ip: '172.31.0.200'
+      state: '{{ STATE }}'
+      instance_ids:
+          - '{{ INSTID }}'
+      instance_tags:
+            name: winwastst
+  
+#Create vpc subnet id
+  - name: Create subnet for webnode servers
+    ec2_vpc_subnet:
+      state: '{{ STATE }}'
+      vpc_id: '{{ VPC_ID }}'
+      cidr: 172.31.0.0/24
+      tags:
+        Name: wasnode_subnet
+    register: wasnode_subnet
+    
+
+
+  - name: winwasnode sg group
+    ec2_group:
+      name: winwas_service_sg
+      description: winwas_service
+      state: '{{ STATE }}'
+      region: '{{ REGION }}'
+      #Basically ingress
+      rules:
+        - proto: tcp
+          from_port: 8080
+          to_port: 8080
+          #cidr_ip: 0.0.0.0/0
+          group_desc: for node
+        - proto: tcp 
+          #from_port: 22
+          from_port: 3389
+          to_port: 3389
+          #to_port: 22
+        - proto: tcp
+          from_port: 80
+          to_port: 80
+
+  - name: "del {{ SSH_KEY_NAME }} key for amazon win2016 srver instance connection"
+    ec2_key:
+      name: '{{ SSH_KEY_NAME }}'
+      state: '{{ STATE }}'
+      force: true
+    register: ec2_key_result
+

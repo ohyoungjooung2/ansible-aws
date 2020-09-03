@@ -1,0 +1,20 @@
+- hosts: localhost
+  gather_facts: False
+  vars_prompt:
+
+    - name: temppasss
+      prompt: password
+      private: yes
+
+  tasks:
+  - name: Create two new IAM users with API keys
+    iam:
+      iam_type: user
+      name: "{{ item }}"
+      state: absent
+      #state: present
+      password: "{{ temppasss }}"
+      access_key_state: create
+    loop:
+      - tester2
+      - tester3

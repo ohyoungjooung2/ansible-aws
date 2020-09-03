@@ -1,0 +1,116 @@
+---
+- hosts: localhost
+  connection: local
+  gather_facts: no
+
+  vars:
+    REGION: 'ap-northeast-2'
+    SSH_KEY_NAME: 'win_instance_key'
+    LOCAL_HOME: "{{ lookup('env','HOME')}}"
+    VPC_ID: 'vpc-f51eca9e'
+    #STATE: absent
+    STATE: present
+    INSTCNT: 1
+    ZN: 'ap-northeast-2c'
+  tasks:
+
+  #Create vpc subnet id
+  - name: Create subnet for webnode servers
+    ec2_vpc_subnet:
+      #state: '{{ STATE }}'
+      vpc_id: '{{ VPC_ID }}'
+      cidr: 172.31.0.0/24
+      az : '{{ ZN }}'
+      tags:
+        Name: wasnode_subnet
+    register: wasnode_subnet
+    
+  - name: vpc_subnet_facts get 
+    ec2_vpc_subnet_facts:
+      filters:
+        vpc-id: '{{ VPC_ID }}'
+        "tag:Name":  "wasnode_subnet" 
+    register: subnet_fact
+
+  - set_fact:
+      subnet_id: "{{ subnet_fact.subnets[0].subnet_id }}"
+
+  - debug:
+      var: subnet_id
+
+
+
+  #Basically do not genearge if it is already exists
+  - name: Generate ssh key for amazon win2016 srver instance connection
+    ec2_key:
+      name: '{{ SSH_KEY_NAME }}'
+      state: '{{ STATE }}'
+      force: true
+    register: ec2_key_result
+ 
+  - name: Save private key
+    copy: content="{{ ec2_key_result.key.private_key }}" dest="./{{ SSH_KEY_NAME }}.pem" mode=0600
+    when: ec2_key_result.changed
+    
+
+  #- meta: end_play
+  #Get public ip of my machine
+  - name: Get my public IP
+    ipify_facts: 
+
+  - name: winwasnode sg group
+    ec2_group:
+      name: winwas_service_sg
+      description: winwas_service
+      state: '{{ STATE }}'
+      region: '{{ REGION }}'
+      #Basically ingress
+      rules:
+        - proto: tcp
+          from_port: 8080
+          to_port: 8080
+          #cidr_ip: 0.0.0.0/0
+          cidr_ip: 
+             - '{{ ipify_public_ip }}/32'
+          group_desc: for node
+        - proto: tcp 
+          #from_port: 22
+          from_port: 3389
+          to_port: 3389
+          #to_port: 22
+          cidr_ip:
+             - '{{ ipify_public_ip }}/32'
+        - proto: tcp
+          from_port: 80
+          to_port: 80
+          cidr_ip: 
+             - '{{ ipify_public_ip }}/32'
+
+
+  - name: Create aws instance for winwas
+    ec2:
+      key_name: '{{ SSH_KEY_NAME }}'
+      region: '{{ REGION }}'
+      instance_type: t2.micro
+      image: ami-0b4d076bfd308be28
+      group: winwas_service_sg
+      wait: yes
+      count: '{{ INSTCNT }}'
+      vpc_subnet_id: '{{ subnet_id }}'
+      assign_public_ip: yes
+      private_ip: '172.31.0.10'
+      state: '{{ STATE }}'
+      zone: '{{ ZN }}'
+      instance_tags:
+            name: winwastst
+
+  - ec2_instance_info:
+       filters:
+         "tag:name": winwastst
+      
+  #Key generate for instance connection
+  #- name: Generate ssh key for codecommit connection
+  #  openssh_keypair:
+  #    path: '{{ SSH_KEY_NAME }}'
+  #    size: 2048
+  #    type: rsa

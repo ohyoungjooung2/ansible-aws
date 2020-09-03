@@ -1,0 +1,33 @@
+---
+- hosts: localhost
+  connection: local
+  gather_facts: no
+
+  vars:
+    REGION: 'ap-northeast-2'
+    SSH_KEY_NAME: 'win_instance_key'
+    LOCAL_HOME: "{{ lookup('env','HOME')}}"
+    VPC_ID: 'vpc-f51eca9e'
+    #STATE: absent
+    STATE: present
+    INSTCNT: 1
+    ZN: 'ap-northeast-2c'
+  tasks:
+
+   - ec2_instance_facts:
+   #- ec2_instance_info: <after ansible 2.9.0>
+       filters:
+         "tag:name": winwastst
+         "Status Check" : ok
+     register: result
+
+   - debug:
+       var: result     
+      
+      
+  #Key generate for instance connection
+  #- name: Generate ssh key for codecommit connection
+  #  openssh_keypair:
+  #    path: '{{ SSH_KEY_NAME }}'
+  #    size: 2048
+  #    type: rsa

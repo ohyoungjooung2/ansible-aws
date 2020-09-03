@@ -1,0 +1,6 @@
+- hosts: localhost
+  gather_facts: False
+  tasks:
+    - aws_region_facts:
+        filters:
+          region-name: ap-northeast-2
