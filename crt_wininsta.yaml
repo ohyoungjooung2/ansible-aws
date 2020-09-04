@@ -75,6 +75,7 @@
           group_desc: for node
         - proto: tcp 
           #from_port: 22
+          #rdpport
           from_port: 3389
           to_port: 3389
           #to_port: 22
@@ -107,6 +108,47 @@
   - ec2_instance_info:
        filters:
          "tag:name": winwastst
+         instance-state-name: ["running"]
+
+         #"Status Check" : ok
+    register: result
+
+  - debug:
+      var: result.instances[0]['public_ip_address']
+
+
+  - name: wait for 3389 port running
+    wait_for:
+      host: "{{  result.instances[0]['public_ip_address'] }}"
+      port: 3389
+      delay: 1
+
+  #- name: get administrator password
+  - name: get the Administrator password
+    ec2_win_password:
+      profile: default
+      instance_id: "{{ result.instances[0]['instance_id'] }}"
+      region: "{{ REGION }}"
+      key_file: "{{ SSH_KEY_NAME }}.pem"
+    register: adminpass
+    until: adminpass.win_password != ""
+    retries: 3
+    delay: 30
+
+  - debug:
+      var: adminpass.win_password
+
+#  - name: nc to win host 3389 if it is ready or not
+#    command: "/bin/nc {{ result.instances[0]['public_ip_address'] }} 3389; rev=$?; echo $rev"
+#    register: result
+#
+#  - debug:
+#       var: result
+
+
+#  - ec2_instance_facts:
+#       filters:
+#         "tag:name": winwastst
       
   #Key generate for instance connection
   #- name: Generate ssh key for codecommit connection
