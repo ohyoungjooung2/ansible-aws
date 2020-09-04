@@ -106,6 +106,7 @@
   - debug:
        var: ec2_out
 
+
   #Wait for winrm to listen on port 5986
   - name: Wait for WinRM on all hosts
     wait_for:

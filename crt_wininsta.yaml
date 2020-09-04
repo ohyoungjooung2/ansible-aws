@@ -138,6 +138,8 @@
   - debug:
       var: adminpass.win_password
 
+
+
 #  - name: nc to win host 3389 if it is ready or not
 #    command: "/bin/nc {{ result.instances[0]['public_ip_address'] }} 3389; rev=$?; echo $rev"
 #    register: result
