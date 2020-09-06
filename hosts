@@ -1,4 +1,4 @@
-[aws]
+[awswin]
 13.124.91.146
 [aws:vars]
 ansible_ssh_user=ec2-user

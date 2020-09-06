@@ -1,0 +1,8 @@
+[awswin]
+54.180.153.166
+[awswin:vars]
+ansible_user=administrator
+ansible_password=test@kkk2020
+ansible_connection=winrm
+ansible_winrm_transport=basic
+ansible_winrm_server_cert_validation=ignore

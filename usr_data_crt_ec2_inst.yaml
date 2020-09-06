@@ -11,7 +11,7 @@
     STATE: present
     INSTCNT: 1
     ZN: 'ap-northeast-2c'
-    ansible_password: test@kkk2020
+    ansible_pass: test@kkk2020
   tasks:
 
   #Create vpc subnet id
@@ -116,58 +116,20 @@
       state: started
     with_items: "{{ ec2_out.instances }}"
 
+  - name: Copy a single file as another user
+    win_copy:
+      src: jdk-8u261-windows-x64.exe
+      dest: 'c:\tmp\jdk-8u261-windows-x64.exe'
+    vars:
+      ansible_user: administrator
+      ansible_password: "{{ ansible_pass }}"
+      ansible_host: "{{ item.public_ip }}"
+      ansible_connection: winrm
+      ansible_winrm_transport: basic
+      ansible_winrm_server_cert_validation: ignore
 
-#Using ec2_instance_info
-#  - ec2_instance_info:
-#       filters:
-#         "tag:name": winwastst
-#         instance-state-name: ["running"]
-#
-#         #"Status Check" : ok
-#    register: result
-#
-#  - debug:
-#      var: result.instances[0]['public_ip_address']
-#
-#
-#  - name: wait for 3389 port running
-#    wait_for:
-#      host: "{{  result.instances[0]['public_ip_address'] }}"
-#      port: 3389
-#      delay: 1
-#
-#  #- name: get administrator password
-#  - name: get the Administrator password
-#    ec2_win_password:
-#      profile: default
-#      instance_id: "{{ result.instances[0]['instance_id'] }}"
-#      region: "{{ REGION }}"
-#      key_file: "{{ SSH_KEY_NAME }}.pem"
-#    register: adminpass
-#    until: adminpass.win_password != ""
-#    retries: 3
-#    delay: 30
-#
-#  - debug:
-#      var: adminpass.win_password
-#
-#
-#
-##  - name: nc to win host 3389 if it is ready or not
-##    command: "/bin/nc {{ result.instances[0]['public_ip_address'] }} 3389; rev=$?; echo $rev"
-##    register: result
-##
-##  - debug:
-##       var: result
-#
-#
-##  - ec2_instance_facts:
-##       filters:
-##         "tag:name": winwastst
-#      
-#  #Key generate for instance connection
-#  #- name: Generate ssh key for codecommit connection
-#  #  openssh_keypair:
-#  #    path: '{{ SSH_KEY_NAME }}'
-#  #    size: 2048
-#  #    type: rsa
+    # The tmp dir must be set when using win_copy as another user
+    # This ensures the become user will have permissions for the operation
+    # Make sure to specify a folder both the ansible_user and the become_user have access to (i.e not %TEMP% which is user specific and requires Admin)
+      ansible_remote_tmp: 'c:\tmp'
+    with_items: "{{ ec2_out.instances }}"
