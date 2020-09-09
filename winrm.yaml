@@ -1,0 +1,7 @@
+---
+ansible_user: administrator
+ansible_password: "{{ ansible_pass }}"
+ansible_host: "{{ item.public_ip }}"
+ansible_connection: winrm
+ansible_winrm_transport: basic
+ansible_winrm_server_cert_validation: ignore
