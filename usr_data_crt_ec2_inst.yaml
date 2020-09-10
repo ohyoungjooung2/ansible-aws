@@ -158,8 +158,6 @@
     #  ignore_error: yes
 
 
-
-
   #- name: java_home set jdk1.8.0_261
   - name: java_home jdk-8u261
     win_path:
@@ -185,6 +183,23 @@
   #- debug:
   #    var: inst_java_path
 
+  - name: Ensure user tomcat is present
+    win_user:
+      name: tomcat
+      password: Pass#G*#9087
+      state: present
+      groups:
+        - Users
+    with_items: "{{ ec2_out.instances }}"
+
+  - name: Grant domain account the SeServiceLogonRight user right
+    win_user_right:
+      name: SeServiceLogonRight
+      users:
+        - tomcat
+      action: add
+    with_items: "{{ ec2_out.instances }}"
+
   #Install apache-tomcat-8.5.57.exe
   - name: Install apache-tomcat-8.5.57.exe
     win_package:
@@ -194,8 +209,21 @@
          - /S
          - /D=C:\tomcat8
       state: present
+      user_name: tomcat
+      user_password: Pass#G*#9087
     with_items: "{{ ec2_out.instances }}"
     register: inst_tomcat
+
+  - name: Add TOMCAT USRS allow rights
+    win_acl:
+      path: C:\tomcat8
+      user: tomcat
+      rights: FullControl
+      type: allow
+      state: present
+      inherit: ContainerInherit, ObjectInherit
+      propagation: 'None'
+    with_items: "{{ ec2_out.instances }}"
 
   #tomcat_home set apache-tomcat-8.5.57.exe
   - name: tomcat_home set apache-tomcat-8.5.57.exe
@@ -208,14 +236,24 @@
     register: inst_java_home
 
 
-  #- name: reboot
-  - name: reboot win server
-    win_reboot:
-      msg: "Reboot this server 3 secs later"
-      post_reboot_delay: 3
-      test_command: whoami
-
+  #CATALINA_HOME set apache-tomcat-8.5.57.exe
+  - name: CATALINA_HOME set apache-tomcat-8.5.57.exe
+    win_path:
+      name: CATALINA_HOME
+      elements: C:\tomcat8
+      scope: machine
+      state: present
     with_items: "{{ ec2_out.instances }}"
+    register: inst_catalina_home
+
+  #- name: reboot
+#  - name: reboot win server
+#    win_reboot:
+#      msg: "Reboot this server 3 secs later"
+#      post_reboot_delay: 3
+#      test_command: whoami
+#
+#    with_items: "{{ ec2_out.instances }}"
 
   - name: check jdk version
     win_shell: "java -version"
@@ -225,13 +263,42 @@
     register: java_version
 
 
+  - name: Firewall rule to allow tomcat on TCP port 8080
+    win_firewall_rule:
+      name: TOMCAT8_SERVICE
+      localport: 8080
+      action: allow
+      direction: in
+      protocol: tcp
+      state: present
+      enabled: yes
+    with_items: "{{ ec2_out.instances }}"
+
+
+  - name: tomcat service start
+    win_service:
+      desktop_interact: no
+      force_dependent_services: yes
+      name: Tomcat8
+      start_mode: auto
+      state: started
+      #state: stopped
+      #username: administrator
+      username: tomcat
+      password: Pass#G*#9087
+      #password: "{{ ansible_pass }}"
+      #username: LocalSystem
+      #password: ''
+    with_items: "{{ ec2_out.instances }}"
+
 
   #tomcat_start
-  - name: tomcat start
-    win_command: C:\tomcat8\bin\Tomcat8.exe //RS//Tomcat8
-    with_items: "{{ ec2_out.instances }}"
-    register: tomcat8_start
-
-    #- debug: msg="{{ java_version.stderr_lines }}"
-    #- debug: 
-    #  var: java_version
+  #- name: tomcat start shell execute
+  #  win_shell: 'tomcat8 //IS//Tomcat8 /user tomcat --DisplayName="Apache Tomcat 8" \
+  #    --Install="C:\tomcat8\bin\tomcat8.exe" --Jvm=auto \
+  #    --StartMode=jvm --StopMode=jvm \
+  #    --StartClass=org.apache.catalina.startup.Bootstrap --StartParams=start \
+  #    --StopClass=org.apache.catalina.startup.Bootstrap --StopParams=stop'
+  #
+  #  with_items: "{{ ec2_out.instances }}"
+  #  register: tomcat8_start
