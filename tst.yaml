@@ -1,48 +1,71 @@
 ---
 - hosts: localhost
-  connection: local
+  #connection: local
   gather_facts: no
 
   vars:
     REGION: 'ap-northeast-2'
-    SSH_KEY_NAME: 'win_instance_key'
     LOCAL_HOME: "{{ lookup('env','HOME')}}"
     VPC_ID: 'vpc-f51eca9e'
     #STATE: absent
     STATE: present
     INSTCNT: 1
     ZN: 'ap-northeast-2c'
+    #ansible_pass: test@kkk2020
+    #ansible_user: administrator
+    #ansible_password: "{{ ansible_pass }}"
+    #ansible_host: 13.125.248.231
+    #ansible_connection: winrm
+    #ansible_winrm_transport: basic
+    #ansible_winrm_server_cert_validation: ignore
+
   tasks:
 
-   #- ec2_instance_facts:
-   #- ec2_instance_info: <after ansible 2.9.0>
    - ec2_instance_info:
-       filters:
-         "tag:name": winwastst
-         instance-state-name: ["running"]
-         #"Status Check" : ok
-     register: result
+        filters:
+                #instance-state-name: [ "running", "stopping", "stopped" ]
+            instance-state-name: [ "running" ]
+     register: out
+
 
    - debug:
-           #var: result.instances[0]['public_ip_address']
-          var: result.instances[0]
-           #var: result
-           
-   - name: get the Administrator password
-     ec2_win_password:
-      profile: default
-      instance_id: "{{ result.instances[0]['instance_id'] }}"
-      region: ap-northeast-2
-      key_file: "win_instance_key.pem"
-     register: adminpass
+           # var: out.instances[0].private_ip_address
+        var: out
+            #- out
 
-   - debug:
-        var: adminpass
 
-   - name: nc to win host 3389 if it is ready or not
-     command: "/bin/nc -zv {{ result.instances[0]['public_ip_address'] }} 3389" 
-     #command: "echo {{ result.instances[0]['public_ip_address'] }}"
-     register: result
 
-   - debug:
-       var: result
+
+  
+#  - name: Grant domain account the SeServiceLogonRight user right
+#    win_user_right:
+#      name: SeServiceLogonRight
+#      users:
+#        - tomcat
+#      action: add
+#
+#  - name: tomcat service start
+#    win_service:
+#      desktop_interact: no
+#      force_dependent_services: yes
+#      name: Tomcat8
+#      start_mode: auto
+#      state: started
+#      #state: stopped
+#      #username: administrator
+#      username: tomcat
+#      #username: LocalSystem
+#      #password: Pass#G*#9087
+#      #password: "{{ ansible_pass }}"
+#      password: ''
+
+  #tomcat_start
+  #- name: tomcat start shell execute
+  #  win_shell: 'tomcat8 //IS//Tomcat8 /user tomcat --DisplayName="Apache Tomcat 8" \
+  #    --Install="C:\tomcat8\bin\tomcat8.exe" --Jvm=auto \
+  #    --StartMode=jvm --StopMode=jvm \
+  #    --StartClass=org.apache.catalina.startup.Bootstrap --StartParams=start \
+  #    --StopClass=org.apache.catalina.startup.Bootstrap --StopParams=stop'
+  #
+  #  with_items: "{{ ec2_out.instances }}"
+  #  register: tomcat8_start
