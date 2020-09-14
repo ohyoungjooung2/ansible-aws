@@ -1,0 +1,38 @@
+---
+- hosts: localhost
+  connection: local
+  gather_facts: no
+
+  vars:
+    REGION: 'ap-northeast-2'
+    LOCAL_HOME: "{{ lookup('env','HOME')}}"
+    #VPC_ID: 'vpc-f51eca9e'
+    STATE: absent
+    #STATE: present
+  tasks:
+
+  - name: get vpc_id for del aws vpc 
+    ec2_vpc_net_info:
+      filters:
+        "tag:Name": dev_seoul
+    register: vpc_fcts
+
+  - debug:
+       var: vpc_fcts
+       # var: vpc_fcts.vpcs[0].vpc_id
+
+
+  - name: delete a VPC from abov vpc_fcts.id
+    command:
+        "aws ec2 delete-vpc --vpc-id {{ vpc_fcts.vpcs[0].vpc_id }}"
+
+
+#  - name: delete a VPC from abov vpc_fcts.id
+#    ec2_vpc_net:
+#      name: dev_seoul
+#      cidr_block: '{{ vpc_fcts.vpcs[0].cidr_block }}'
+#      state: '{{ STATE }}'
+#      region: '{{ REGION }}'
+#      
+#
+#
