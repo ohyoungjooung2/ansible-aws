@@ -14,6 +14,9 @@
     ansible_pass: test@kkk2020
   tasks:
 
+  
+
+ 
   #Create vpc subnet id
   - name: Create subnet for webnode servers
     ec2_vpc_subnet:
@@ -90,6 +93,9 @@
     ec2:
       region: '{{ REGION }}'
       instance_type: t2.micro
+      #2016 seoul windows server base datacenter
+      #image: ami-0b4d076bfd308be28
+      #2019 seoul windows server base datacenter
       image: ami-0b4d076bfd308be28
       group: winwas_service_sg
       wait: yes
@@ -143,8 +149,83 @@
       dest: 'c:\tmp\apache-tomcat-8.5.57.exe'
     with_items: "{{ ec2_out.instances }}"
 
+  - name: Copy mariadb-10.5.5-winx64.msi  single file
+    win_copy:
+      src: mariadb-10.5.5-winx64.msi
+      dest: 'c:\tmp\mariadb-10.5.5-winx64.msi'
+    with_items: "{{ ec2_out.instances }}"
+
+  - name: Ensure user maria is present
+    win_user:
+       name: maria
+       password: Pass#G*#9087
+       state: present
+       groups:
+         - Users
+    with_items: "{{ ec2_out.instances }}"
+
+  - name: Grant domain account the SeServiceLogonRight user right
+    win_user_right:
+      name: SeServiceLogonRight
+      users:
+        - maria
+      action: add
+    with_items: "{{ ec2_out.instances }}"
+
+  #Install mariadb-10.5.5-winx64.msi
+  - name: Install mariadb-10.5.5-winx64.msi
+    win_package:
+      path: 'c:\tmp\mariadb-10.5.5-winx64.msi'
+      arguments:
+        - SERVICENAME=MARIADB
+        - INSTALLDIR=C:\mariadb
+        - PASSWORD=dnflskfk50%T
+      state: present
+      #state: absent
+      user_name: maria
+      user_password: Pass#G*#9087
+      #user_password: '{{ ansible_password }}'
+    with_items: "{{ ec2_out.instances }}"
+    register: inst_mariadb
+
+  #- name: mariadb_path set mariadb-10.5.5-winx64.msi
+  - name: path mariadb-10.5.5
+    win_path:
+      name: PATH
+      elements: C:\mariadb\bin
+      scope: machine
+      state: present
+    with_items: "{{ ec2_out.instances }}"
+
+
+  - name: mariadb service start
+    win_service:
+      desktop_interact: no
+      force_dependent_services: yes
+      name: MARIADB
+      start_mode: auto
+      state: started
+      #state: stopped
+      #username: administrator
+      username: maria
+      password: Pass#G*#9087
+    with_items: "{{ ec2_out.instances }}"
+
+
+
+
+  - name: Create custdb database
+    win_command: mysqladmin create custdb1 -u root -pdnflskfk50%T
+    ignore_errors: yes
+    with_items: "{{ ec2_out.instances }}"
+
+
+
+
+  - meta: end_play
+
   #Install jdk-8.exe
-  - name: Install jdk-8u261-windows-x64.exe and apache-tomcat-8.5.57.exe
+  - name: Install jdk-8u261-windows-x64.exe
     win_package:
       path: 'c:\tmp\jdk-8u261-windows-x64.exe'
       product_id: jdk-8u261
@@ -248,14 +329,6 @@
     with_items: "{{ ec2_out.instances }}"
     register: inst_catalina_home
 
-  #- name: reboot
-#  - name: reboot win server
-#    win_reboot:
-#      msg: "Reboot this server 3 secs later"
-#      post_reboot_delay: 3
-#      test_command: whoami
-#
-#    with_items: "{{ ec2_out.instances }}"
 
   - name: check jdk version
     win_shell: "java -version"
@@ -293,3 +366,23 @@
       #password: ''
     with_items: "{{ ec2_out.instances }}"
 
+  #- name: reboot
+#  - name: reboot win server
+#    win_reboot:
+#      msg: "Reboot this server 3 secs later"
+#      post_reboot_delay: 3
+#      test_command: whoami
+#
+#    with_items: "{{ ec2_out.instances }}"
+#
+#
+#
+#  #For linux like systems
+#  - name: Create myapp database
+#    mysql_db:
+#       name: custdb
+#       login_user: root
+#       login_password: dnflskfk50%T
+#       login_host: localhost
+#       state: present
+#    with_items: "{{ ec2_out.instances }}"
