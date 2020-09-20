@@ -1,0 +1,1 @@
+mysql.exe -u root -pm117988 -e "GRANT ALL ON *.* TO 'root'@'%' IDENTIFIED BY 'm117988' WITH GRANT OPTION; FLUSH PRIVILEGES;"
