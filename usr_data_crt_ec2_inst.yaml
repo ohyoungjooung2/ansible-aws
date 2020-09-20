@@ -162,7 +162,7 @@
   - debug:
        var: ec2_out
 
-  - meta: end_play
+       #- meta: end_play
 
   #Wait for winrm to listen on port 5986
   - name: Wait for WinRM on all hosts
@@ -228,7 +228,7 @@
       arguments:
         - SERVICENAME=MARIADB
         - INSTALLDIR=C:\mariadb
-        - PASSWORD=dnflskfk50%T
+        - PASSWORD=godPassok%993123
       state: present
       #state: absent
       user_name: maria
@@ -262,14 +262,19 @@
 
 
 
+    #- meta: end_play
 
   - name: Create custdb database
-    win_command: mysqladmin create custdb1 -u root -pdnflskfk50%T
-    ignore_errors: yes
+    win_command: mysqladmin create custdb -u root -pgodPassok%993123
+    #ignore_errors: yes
     with_items: "{{ ec2_out.instances }}"
 
 
-  - meta: end_play
+  - name: grant custdb database to tstuser
+    win_command: mysql -u root -pgodPassok%993123 -e "GRANT ALL PRIVILEGES ON custdb.* TO 'tstuser'@'localhost' identified by 'goodPass%8788'; flush privileges"
+    #ignore_errors: yes
+    with_items: "{{ ec2_out.instances }}"
+
 
   #Install jdk-8.exe
   - name: Install jdk-8u261-windows-x64.exe
@@ -286,7 +291,6 @@
     #- debug:
     #  var: inst_jdk
     #  ignore_error: yes
-
 
   #- name: java_home set jdk1.8.0_261
   - name: java_home jdk-8u261
