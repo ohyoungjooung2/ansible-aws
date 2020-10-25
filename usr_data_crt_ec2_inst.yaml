@@ -36,6 +36,7 @@
     ec2_vpc_igw:
       vpc_id: '{{ dev_seoul_vpc.vpc.id }}'
       state: present
+      region: '{{ REGION }}'
       tags:
         Name: dev_seoul_igw
     register: dev_seoul_igw
