@@ -32,7 +32,7 @@
   - debug:
       var: dev_seoul_vpc.vpc.id
 
-  - name: Create subnet for webnode servers
+  - name: Create internet gateway
     ec2_vpc_igw:
       vpc_id: '{{ dev_seoul_vpc.vpc.id }}'
       state: present
