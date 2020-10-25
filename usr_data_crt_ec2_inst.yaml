@@ -53,6 +53,7 @@
       vpc_id: '{{ dev_seoul_vpc.vpc.id }}'
       #cidr: 172.31.1.0/24
       cidr: 10.10.1.0/24
+      region: '{{ REGION }}'
       az : '{{ ZN }}'
       tags:
         Name: apnode_subnet
