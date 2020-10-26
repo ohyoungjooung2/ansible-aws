@@ -62,6 +62,7 @@
 
   - name: vpc_subnet_facts get 
     ec2_vpc_subnet_facts:
+      region: '{{ REGION }}'
       filters:
         #vpc-id: '{{ VPC_ID }}'
         vpc-id: '{{ dev_seoul_vpc.vpc.id }}'
