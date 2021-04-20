@@ -1,4 +1,12 @@
 - hosts: localhost
   gather_facts: False
   tasks:
-          - amazon.aws.ec2_group_info:
+       - amazon.aws.ec2_group_info:
+               #           filters:
+               #"tag:Name": test
+
+         register: tst
+
+       - debug: 
+           var: tst
+
