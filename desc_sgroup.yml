@@ -1,7 +1,10 @@
 - hosts: localhost
   gather_facts: False
+  vars:
+    region: 'ap-northeast-2'
   tasks:
        - amazon.aws.ec2_group_info:
+            region: '{{ region }}'
                #           filters:
                #"tag:Name": test
 
